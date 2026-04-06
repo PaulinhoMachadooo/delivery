@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrega Certa | Delivery da Cidade</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="badge">Delivery local</p>
+        <h1>Peça comida dos melhores comércios da cidade</h1>
+        <p class="subtitle">
+          Plataforma completa para pedidos online com acompanhamento de entrega.
+        </p>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section>
+        <h2>Comércios disponíveis</h2>
+        <div id="merchant-list" class="cards"></div>
+      </section>
+
+      <section>
+        <h2>Cardápio</h2>
+        <div id="menu-list" class="cards"></div>
+      </section>
+
+      <aside class="cart-panel">
+        <h2>Seu pedido</h2>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-summary" id="cart-summary">
+          <p>Selecione um comércio para começar.</p>
+        </div>
+
+        <form id="checkout-form">
+          <h3>Entrega</h3>
+          <label>
+            Nome
+            <input type="text" name="customerName" required />
+          </label>
+          <label>
+            Telefone
+            <input type="tel" name="customerPhone" required />
+          </label>
+          <label>
+            Endereço completo
+            <textarea name="address" rows="3" required></textarea>
+          </label>
+          <button type="submit">Finalizar pedido</button>
+        </form>
+
+        <div id="order-feedback" class="feedback" aria-live="polite"></div>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
