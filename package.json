@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "init:hostinger-db": "node scripts/init-hostinger-db.js"
   },
   "keywords": [
     "delivery",
@@ -17,6 +18,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "mysql2": "^3.11.3"
   }
 }

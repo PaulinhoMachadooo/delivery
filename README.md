@@ -32,3 +32,18 @@ Acesse: `http://localhost:3000`
 - `GET /api/merchants/:merchantId/menu`
 - `POST /api/orders`
 - `GET /api/orders/:orderId`
+
+## Configurar banco na Hostinger (MySQL)
+
+1. Crie um banco MySQL na Hostinger e um usuário com permissão total.
+2. Copie `.env.example` para `.env` e preencha as variáveis (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
+3. Instale dependências e inicialize o schema:
+
+```bash
+npm install
+npm run init:hostinger-db
+```
+
+Arquivos de apoio:
+- Schema SQL: `db/hostinger-schema.sql`
+- Script de inicialização: `scripts/init-hostinger-db.js`
