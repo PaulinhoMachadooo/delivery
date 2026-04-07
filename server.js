@@ -510,6 +510,73 @@ app.get('/api/admin/merchants/:merchantId/orders', requireAdminAuth, async (req,
   }
 });
 
+
+app.get('/api/admin/merchants/:merchantId/dashboard', requireAdminAuth, async (req, res) => {
+  const { merchantId } = req.params;
+
+  if (Number(merchantId) !== req.admin.merchantId) {
+    return res.status(403).json({ message: 'Acesso negado.' });
+  }
+
+  try {
+    const statusRows = await all(
+      `SELECT status, COUNT(*) AS total
+       FROM orders
+       WHERE merchant_id = ?
+       GROUP BY status`,
+      [merchantId]
+    );
+
+    const dailySales = await get(
+      `SELECT COALESCE(SUM(total), 0) AS total_sales,
+              COUNT(*) AS total_orders
+       FROM orders
+       WHERE merchant_id = ?
+         AND date(created_at) = date('now')
+         AND status != 'Cancelado'`,
+      [merchantId]
+    );
+
+    const topItems = await all(
+      `SELECT mi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.unit_price) AS revenue
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       JOIN menu_items mi ON mi.id = oi.menu_item_id
+       WHERE o.merchant_id = ?
+         AND date(o.created_at) = date('now')
+         AND o.status != 'Cancelado'
+       GROUP BY mi.id, mi.name
+       ORDER BY qty DESC
+       LIMIT 5`,
+      [merchantId]
+    );
+
+    const counters = {
+      total: 0,
+      recebido: 0,
+      concluido: 0,
+      cancelado: 0
+    };
+
+    for (const row of statusRows) {
+      counters.total += row.total;
+      if (row.status === 'Recebido' || row.status === 'Em preparo' || row.status === 'Saiu para entrega') {
+        counters.recebido += row.total;
+      }
+      if (row.status === 'Entregue') {
+        counters.concluido += row.total;
+      }
+      if (row.status === 'Cancelado') {
+        counters.cancelado += row.total;
+      }
+    }
+
+    return res.json({ counters, dailySales, topItems });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao carregar dashboard.' });
+  }
+});
+
 app.patch('/api/admin/orders/:orderId/status', requireAdminAuth, async (req, res) => {
   const { orderId } = req.params;
   const { status } = req.body;

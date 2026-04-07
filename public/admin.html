@@ -25,6 +25,23 @@
       </section>
 
       <div id="admin-dashboard" class="grid hidden">
+
+        <section class="card dashboard-card">
+          <h2>Dashboard</h2>
+          <div class="kpis" id="kpi-cards">
+            <div class="kpi"><span>Pedidos totais</span><strong id="kpi-total">0</strong></div>
+            <div class="kpi"><span>Em andamento</span><strong id="kpi-open">0</strong></div>
+            <div class="kpi"><span>Concluídos</span><strong id="kpi-done">0</strong></div>
+            <div class="kpi"><span>Cancelados</span><strong id="kpi-cancel">0</strong></div>
+          </div>
+          <div class="daily-report">
+            <h3>Relatório diário</h3>
+            <p><strong>Vendas do dia:</strong> <span id="daily-sales">R$ 0,00</span></p>
+            <p><strong>Pedidos do dia:</strong> <span id="daily-orders">0</span></p>
+            <h4>Itens mais vendidos hoje</h4>
+            <div id="top-items"></div>
+          </div>
+        </section>
         <section class="card">
           <div class="row">
             <h2 id="merchant-title">Restaurante</h2>

@@ -10,6 +10,13 @@ const menuForm = document.getElementById('menu-form');
 const menuList = document.getElementById('menu-list');
 const ordersList = document.getElementById('orders-list');
 const feedback = document.getElementById('feedback');
+const kpiTotal = document.getElementById('kpi-total');
+const kpiOpen = document.getElementById('kpi-open');
+const kpiDone = document.getElementById('kpi-done');
+const kpiCancel = document.getElementById('kpi-cancel');
+const dailySales = document.getElementById('daily-sales');
+const dailyOrders = document.getElementById('daily-orders');
+const topItems = document.getElementById('top-items');
 
 let authToken = localStorage.getItem('admin_token') || '';
 let merchant = null;
@@ -66,7 +73,7 @@ async function fetchMe() {
   merchantForm.rating.value = merchantDetail.rating;
 
   setLoggedInUI(profile);
-  await Promise.all([loadMenu(), loadOrders()]);
+  await Promise.all([loadMenu(), loadOrders(), loadDashboard()]);
 }
 
 async function loadMenu() {
@@ -113,6 +120,35 @@ async function loadOrders() {
         </div>
       </div>`
     )
+    .join('');
+}
+
+
+async function loadDashboard() {
+  const response = await fetch(`/api/admin/merchants/${merchant.id}/dashboard`, {
+    headers: { Authorization: `Bearer ${authToken}` }
+  });
+
+  if (!response.ok) {
+    return;
+  }
+
+  const data = await response.json();
+  kpiTotal.textContent = data.counters.total;
+  kpiOpen.textContent = data.counters.recebido;
+  kpiDone.textContent = data.counters.concluido;
+  kpiCancel.textContent = data.counters.cancelado;
+
+  dailySales.textContent = money(data.dailySales.total_sales || 0);
+  dailyOrders.textContent = data.dailySales.total_orders || 0;
+
+  if (!data.topItems.length) {
+    topItems.innerHTML = '<small>Nenhum item vendido hoje ainda.</small>';
+    return;
+  }
+
+  topItems.innerHTML = data.topItems
+    .map((item) => `<div class="top-item"><span>${item.name}</span><strong>${item.qty} un.</strong></div>`)
     .join('');
 }
 
@@ -194,7 +230,7 @@ menuForm.addEventListener('submit', async (event) => {
   if (!response.ok) return showFeedback('Erro ao adicionar item.', true);
   menuForm.reset();
   showFeedback('Item adicionado com sucesso.');
-  await loadMenu();
+  await Promise.all([loadMenu(), loadDashboard()]);
 });
 
 menuList.addEventListener('click', async (event) => {
@@ -216,7 +252,7 @@ menuList.addEventListener('click', async (event) => {
 
     if (!response.ok) return showFeedback('Erro ao editar item.', true);
     showFeedback('Item atualizado com sucesso.');
-    await loadMenu();
+    await Promise.all([loadMenu(), loadDashboard()]);
     return;
   }
 
@@ -230,7 +266,7 @@ menuList.addEventListener('click', async (event) => {
 
     if (!response.ok) return showFeedback('Erro ao excluir item.', true);
     showFeedback('Item removido com sucesso.');
-    await loadMenu();
+    await Promise.all([loadMenu(), loadDashboard()]);
   }
 });
 
@@ -247,7 +283,7 @@ ordersList.addEventListener('change', async (event) => {
 
   if (!response.ok) return showFeedback('Erro ao atualizar status.', true);
   showFeedback('Status do pedido atualizado.');
-  await loadOrders();
+  await Promise.all([loadOrders(), loadDashboard()]);
 });
 
 (async function bootstrap() {
