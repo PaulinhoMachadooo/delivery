@@ -18,23 +18,35 @@ let cart = [];
 let activeCategory = 'Todos';
 
 const merchantImages = {
-  Pizza: '/images/pizzaria.svg',
-  Japonês: '/images/sushi.svg',
-  Hambúrguer: '/images/burger.svg'
+  Pizza: 'https://source.unsplash.com/900x600/?pizzeria,pizza,restaurant',
+  Japonês: 'https://source.unsplash.com/900x600/?sushi,restaurant,japanese-food',
+  Hambúrguer: 'https://source.unsplash.com/900x600/?burger,fries,restaurant'
 };
 
-const menuImagesByCategory = {
-  Pizza: '/images/pizza-item.svg',
-  Japonês: '/images/sushi-item.svg',
-  Hambúrguer: '/images/burger-item.svg'
-};
+const menuImagesByKeyword = [
+  { match: ['pizza', 'calabresa', 'margherita'], image: 'https://source.unsplash.com/800x500/?pizza,pepperoni' },
+  { match: ['refrigerante'], image: 'https://source.unsplash.com/800x500/?soda,cold-drink' },
+  { match: ['sushi', 'combinado', 'temaki'], image: 'https://source.unsplash.com/800x500/?sushi,sashimi' },
+  { match: ['yakissoba'], image: 'https://source.unsplash.com/800x500/?yakisoba,noodles' },
+  { match: ['burger', 'hambúrguer', 'bacon'], image: 'https://source.unsplash.com/800x500/?cheeseburger,bacon' },
+  { match: ['batata'], image: 'https://source.unsplash.com/800x500/?french-fries,potato' }
+];
 
 function getMerchantImage(category) {
-  return merchantImages[category] || '/images/burger.svg';
+  return merchantImages[category] || 'https://source.unsplash.com/900x600/?food,restaurant';
 }
 
-function getMenuItemImage() {
-  return menuImagesByCategory[selectedMerchant?.category] || '/images/burger-item.svg';
+function getMenuItemImage(itemName = '') {
+  const normalized = itemName.toLowerCase();
+  const match = menuImagesByKeyword.find((rule) =>
+    rule.match.some((term) => normalized.includes(term))
+  );
+
+  if (match) {
+    return match.image;
+  }
+
+  return 'https://source.unsplash.com/800x500/?food,dish';
 }
 
 const money = (value) =>
@@ -111,7 +123,7 @@ function renderMenu() {
     .map(
       (item) => `
       <article class="card menu-card">
-        <img class="dish-cover" src="${getMenuItemImage()}" alt="Foto ilustrativa de ${item.name}" loading="lazy" />
+        <img class="dish-cover" src="${getMenuItemImage(item.name)}" alt="Foto ilustrativa de ${item.name}" loading="lazy" />
         <strong>${item.name}</strong>
         <span class="meta">${item.description}</span>
         <div class="card-footer">
