@@ -237,6 +237,13 @@ button {
   color: #1f2937;
 }
 
+
+.link-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 .cart-panel {
   position: sticky;
   top: 5rem;

@@ -257,6 +257,141 @@ app.get('/api/orders/:orderId', async (req, res) => {
   }
 });
 
+
+
+app.get('/api/admin/merchants', async (_, res) => {
+  try {
+    const merchants = await all('SELECT * FROM merchants ORDER BY name');
+    res.json(merchants);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao carregar comércios.' });
+  }
+});
+
+app.put('/api/admin/merchants/:merchantId', async (req, res) => {
+  const { merchantId } = req.params;
+  const { name, category, delivery_fee: deliveryFee, eta_minutes: etaMinutes, rating } = req.body;
+
+  if (!name || !category || !deliveryFee || !etaMinutes || !rating) {
+    return res.status(400).json({ message: 'Dados inválidos para atualização do comércio.' });
+  }
+
+  try {
+    const result = await run(
+      'UPDATE merchants SET name = ?, category = ?, delivery_fee = ?, eta_minutes = ?, rating = ? WHERE id = ?',
+      [name, category, deliveryFee, etaMinutes, rating, merchantId]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Comércio não encontrado.' });
+    }
+
+    return res.json({ message: 'Comércio atualizado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao atualizar comércio.' });
+  }
+});
+
+app.post('/api/admin/merchants/:merchantId/menu', async (req, res) => {
+  const { merchantId } = req.params;
+  const { name, description, price } = req.body;
+
+  if (!name || !description || !price) {
+    return res.status(400).json({ message: 'Dados inválidos para item de cardápio.' });
+  }
+
+  try {
+    const result = await run(
+      'INSERT INTO menu_items (merchant_id, name, description, price) VALUES (?, ?, ?, ?)',
+      [merchantId, name, description, price]
+    );
+
+    return res.status(201).json({ id: result.id, message: 'Item adicionado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao adicionar item.' });
+  }
+});
+
+app.put('/api/admin/menu/:menuItemId', async (req, res) => {
+  const { menuItemId } = req.params;
+  const { name, description, price } = req.body;
+
+  if (!name || !description || !price) {
+    return res.status(400).json({ message: 'Dados inválidos para atualização do item.' });
+  }
+
+  try {
+    const result = await run(
+      'UPDATE menu_items SET name = ?, description = ?, price = ? WHERE id = ?',
+      [name, description, price, menuItemId]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Item não encontrado.' });
+    }
+
+    return res.json({ message: 'Item atualizado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao atualizar item.' });
+  }
+});
+
+app.delete('/api/admin/menu/:menuItemId', async (req, res) => {
+  const { menuItemId } = req.params;
+
+  try {
+    const result = await run('DELETE FROM menu_items WHERE id = ?', [menuItemId]);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Item não encontrado.' });
+    }
+
+    return res.json({ message: 'Item removido com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao remover item.' });
+  }
+});
+
+app.get('/api/admin/merchants/:merchantId/orders', async (req, res) => {
+  const { merchantId } = req.params;
+
+  try {
+    const orders = await all(
+      `SELECT id, customer_name, customer_phone, address, status, total, created_at
+       FROM orders
+       WHERE merchant_id = ?
+       ORDER BY datetime(created_at) DESC`,
+      [merchantId]
+    );
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao carregar pedidos.' });
+  }
+});
+
+app.patch('/api/admin/orders/:orderId/status', async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  const allowedStatus = ['Recebido', 'Em preparo', 'Saiu para entrega', 'Entregue', 'Cancelado'];
+
+  if (!allowedStatus.includes(status)) {
+    return res.status(400).json({ message: 'Status inválido.' });
+  }
+
+  try {
+    const result = await run('UPDATE orders SET status = ? WHERE id = ?', [status, orderId]);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
+    }
+
+    return res.json({ message: 'Status atualizado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao atualizar status do pedido.' });
+  }
+});
+
 app.get('*', (_, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

@@ -1,0 +1,11 @@
+body { font-family: Inter, sans-serif; margin: 0; background: #f5f7fb; color: #111827; }
+header { display:flex; justify-content:space-between; align-items:center; padding:1rem 1.25rem; background:#fff; border-bottom:1px solid #e5e7eb; }
+main.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:1rem; padding:1rem; }
+.card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1rem; }
+form { display:grid; gap:.55rem; margin-bottom:1rem; }
+input, select, button { padding:.6rem .7rem; border-radius:8px; border:1px solid #d1d5db; font:inherit; }
+button { background:#ea1d2c; color:#fff; border:0; font-weight:700; cursor:pointer; }
+.item, .order { border:1px solid #e5e7eb; border-radius:8px; padding:.65rem; margin-bottom:.55rem; background:#fafafa; }
+.row { display:flex; justify-content:space-between; gap:.5rem; align-items:center; }
+small { color:#6b7280; }
+#feedback { padding:0 1rem 1rem; font-weight:700; }
