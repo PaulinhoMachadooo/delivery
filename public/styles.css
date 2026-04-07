@@ -278,6 +278,29 @@ textarea {
   padding: 1rem;
 }
 
+
+
+.merchant-card,
+.menu-card {
+  overflow: hidden;
+}
+
+.merchant-cover,
+.dish-cover {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #f1f1f1;
+}
+
+.merchant-cover {
+  height: 120px;
+}
+
+.dish-cover {
+  height: 110px;
+}
+
 @media (max-width: 1180px) {
   .app-layout {
     grid-template-columns: 1fr;

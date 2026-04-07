@@ -17,6 +17,26 @@ let currentMenu = [];
 let cart = [];
 let activeCategory = 'Todos';
 
+const merchantImages = {
+  Pizza: '/images/pizzaria.svg',
+  Japonês: '/images/sushi.svg',
+  Hambúrguer: '/images/burger.svg'
+};
+
+const menuImagesByCategory = {
+  Pizza: '/images/pizza-item.svg',
+  Japonês: '/images/sushi-item.svg',
+  Hambúrguer: '/images/burger-item.svg'
+};
+
+function getMerchantImage(category) {
+  return merchantImages[category] || '/images/burger.svg';
+}
+
+function getMenuItemImage() {
+  return menuImagesByCategory[selectedMerchant?.category] || '/images/burger-item.svg';
+}
+
 const money = (value) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -62,7 +82,8 @@ function renderMerchants() {
   merchantList.innerHTML = filteredMerchants
     .map(
       (merchant) => `
-      <article class="card ${selectedMerchant?.id === merchant.id ? 'active' : ''}">
+      <article class="card merchant-card ${selectedMerchant?.id === merchant.id ? 'active' : ''}">
+        <img class="merchant-cover" src="${getMerchantImage(merchant.category)}" alt="Imagem de ${merchant.category}" loading="lazy" />
         <strong>${merchant.name}</strong>
         <span class="meta">${merchant.category} • ⭐ ${merchant.rating.toFixed(1)}</span>
         <span class="meta">Entrega ${money(merchant.delivery_fee)} • ${merchant.eta_minutes} min</span>
@@ -89,7 +110,8 @@ function renderMenu() {
   menuList.innerHTML = currentMenu
     .map(
       (item) => `
-      <article class="card">
+      <article class="card menu-card">
+        <img class="dish-cover" src="${getMenuItemImage()}" alt="Foto ilustrativa de ${item.name}" loading="lazy" />
         <strong>${item.name}</strong>
         <span class="meta">${item.description}</span>
         <div class="card-footer">
