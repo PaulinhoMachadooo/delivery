@@ -17,6 +17,13 @@ let currentMenu = [];
 let cart = [];
 let activeCategory = 'Todos';
 
+const categoryMeta = {
+  Todos: { icon: '🍽️', label: 'Todos' },
+  Pizza: { icon: '🍕', label: 'Pizzas' },
+  Hambúrguer: { icon: '🍔', label: 'Lanches' },
+  Japonês: { icon: '🍣', label: 'Japonesa' }
+};
+
 const merchantImages = {
   Pizza: 'https://source.unsplash.com/900x600/?pizzeria,pizza,restaurant',
   Japonês: 'https://source.unsplash.com/900x600/?sushi,restaurant,japanese-food',
@@ -63,10 +70,14 @@ function showFeedback(message, type = '') {
 function renderCategories() {
   const categories = ['Todos', ...new Set(merchants.map((merchant) => merchant.category))];
   categoryChips.innerHTML = categories
-    .map(
-      (category) =>
-        `<button type="button" class="chip ${activeCategory === category ? 'active' : ''}" data-category="${category}">${category}</button>`
-    )
+    .map((category) => {
+      const meta = categoryMeta[category] || { icon: '🍴', label: category };
+      return `
+        <button type="button" class="chip cat-pill ${activeCategory === category ? 'active' : ''}" data-category="${category}">
+          <span class="cat-icon" aria-hidden="true">${meta.icon}</span>
+          <span>${meta.label}</span>
+        </button>`;
+    })
     .join('');
 }
 
