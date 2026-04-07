@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrega Certa | Delivery da Cidade</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">🍔 Entrega Certa</div>
+      <div class="location">Entregando em <strong>Centro, sua cidade</strong></div>
+      <button class="ghost-btn" type="button">Entrar</button>
+    </header>
+
+    <section class="hero">
+      <h1>Seu delivery local com experiência premium</h1>
+      <p>Peça refeições dos melhores comércios da cidade com rapidez, segurança e acompanhamento em tempo real.</p>
+      <div class="search-wrap">
+        <input id="search-input" type="search" placeholder="Buscar restaurante, prato ou categoria" />
+      </div>
+      <div class="chips" id="category-chips"></div>
+    </section>
+
+    <main class="app-layout">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Restaurantes</h2>
+          <span id="merchant-count" class="muted"></span>
+        </div>
+        <div id="merchant-list" class="cards"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2 id="menu-title">Cardápio</h2>
+          <span id="menu-hint" class="muted">Selecione um restaurante para começar.</span>
+        </div>
+        <div id="menu-list" class="cards menu-grid"></div>
+      </section>
+
+      <aside class="cart-panel">
+        <h2>Seu pedido</h2>
+        <div id="cart-items" class="cart-items"></div>
+        <div id="cart-summary" class="cart-summary">
+          <p class="muted">Adicione itens para continuar.</p>
+        </div>
+
+        <form id="checkout-form">
+          <h3>Dados de entrega</h3>
+          <label>
+            Nome
+            <input type="text" name="customerName" required />
+          </label>
+          <label>
+            Telefone
+            <input type="tel" name="customerPhone" required />
+          </label>
+          <label>
+            Endereço completo
+            <textarea name="address" rows="3" required></textarea>
+          </label>
+          <button type="submit" class="primary-btn">Finalizar pedido</button>
+        </form>
+
+        <div id="order-feedback" class="feedback" aria-live="polite"></div>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
