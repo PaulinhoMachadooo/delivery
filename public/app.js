@@ -25,22 +25,22 @@ const categoryMeta = {
 };
 
 const merchantImages = {
-  Pizza: 'https://source.unsplash.com/900x600/?pizzeria,pizza,restaurant',
-  Japonês: 'https://source.unsplash.com/900x600/?sushi,restaurant,japanese-food',
-  Hambúrguer: 'https://source.unsplash.com/900x600/?burger,fries,restaurant'
+  Pizza: '/images/pizzaria.svg',
+  Japonês: '/images/sushi.svg',
+  Hambúrguer: '/images/burger.svg'
 };
 
 const menuImagesByKeyword = [
-  { match: ['pizza', 'calabresa', 'margherita'], image: 'https://source.unsplash.com/800x500/?pizza,pepperoni' },
-  { match: ['refrigerante'], image: 'https://source.unsplash.com/800x500/?soda,cold-drink' },
-  { match: ['sushi', 'combinado', 'temaki'], image: 'https://source.unsplash.com/800x500/?sushi,sashimi' },
-  { match: ['yakissoba'], image: 'https://source.unsplash.com/800x500/?yakisoba,noodles' },
-  { match: ['burger', 'hambúrguer', 'bacon'], image: 'https://source.unsplash.com/800x500/?cheeseburger,bacon' },
-  { match: ['batata'], image: 'https://source.unsplash.com/800x500/?french-fries,potato' }
+  { match: ['pizza', 'calabresa', 'margherita'], image: '/images/pizza-item.svg' },
+  { match: ['refrigerante'], image: '/images/burger-item.svg' },
+  { match: ['sushi', 'combinado', 'temaki'], image: '/images/sushi-item.svg' },
+  { match: ['yakissoba'], image: '/images/sushi-item.svg' },
+  { match: ['burger', 'hambúrguer', 'bacon'], image: '/images/burger-item.svg' },
+  { match: ['batata'], image: '/images/burger-item.svg' }
 ];
 
 function getMerchantImage(category) {
-  return merchantImages[category] || 'https://source.unsplash.com/900x600/?food,restaurant';
+  return merchantImages[category] || '/images/burger.svg';
 }
 
 function getMenuItemImage(itemName = '') {
@@ -53,7 +53,7 @@ function getMenuItemImage(itemName = '') {
     return match.image;
   }
 
-  return 'https://source.unsplash.com/800x500/?food,dish';
+  return '/images/burger-item.svg';
 }
 
 const money = (value) =>
