@@ -1,12 +1,18 @@
-const merchantSelect = document.getElementById('merchant-select');
+const loginCard = document.getElementById('login-card');
+const loginForm = document.getElementById('login-form');
+const dashboard = document.getElementById('admin-dashboard');
+const logoutButton = document.getElementById('logout-btn');
+const merchantTitle = document.getElementById('merchant-title');
+const merchantOwner = document.getElementById('merchant-owner');
+
 const merchantForm = document.getElementById('merchant-form');
 const menuForm = document.getElementById('menu-form');
 const menuList = document.getElementById('menu-list');
 const ordersList = document.getElementById('orders-list');
 const feedback = document.getElementById('feedback');
 
-let merchants = [];
-let selectedMerchantId = null;
+let authToken = localStorage.getItem('admin_token') || '';
+let merchant = null;
 let menuItems = [];
 
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -16,31 +22,55 @@ function showFeedback(message, isError = false) {
   feedback.style.color = isError ? '#b91c1c' : '#166534';
 }
 
-async function loadMerchants() {
-  const response = await fetch('/api/admin/merchants');
-  merchants = await response.json();
-
-  merchantSelect.innerHTML = merchants.map((m) => `<option value="${m.id}">${m.name}</option>`).join('');
-
-  if (merchants.length > 0) {
-    selectedMerchantId = Number(merchantSelect.value);
-    fillMerchantForm();
-    await Promise.all([loadMenu(), loadOrders()]);
-  }
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authToken}`
+  };
 }
 
-function fillMerchantForm() {
-  const merchant = merchants.find((m) => m.id === selectedMerchantId);
-  if (!merchant) return;
+function setLoggedInUI(profile) {
+  loginCard.classList.add('hidden');
+  dashboard.classList.remove('hidden');
+  merchantTitle.textContent = profile.merchant.name;
+  merchantOwner.textContent = `Responsável: ${profile.name} (${profile.email})`;
+}
+
+function setLoggedOutUI() {
+  dashboard.classList.add('hidden');
+  loginCard.classList.remove('hidden');
+}
+
+async function fetchMe() {
+  const response = await fetch('/api/admin/me', {
+    headers: { Authorization: `Bearer ${authToken}` }
+  });
+
+  if (!response.ok) {
+    throw new Error('Sessão inválida');
+  }
+
+  const profile = await response.json();
+  merchant = profile.merchant;
+
   merchantForm.name.value = merchant.name;
   merchantForm.category.value = merchant.category;
-  merchantForm.delivery_fee.value = merchant.delivery_fee;
-  merchantForm.eta_minutes.value = merchant.eta_minutes;
-  merchantForm.rating.value = merchant.rating;
+
+  const merchantDetailResponse = await fetch('/api/admin/merchants', {
+    headers: { Authorization: `Bearer ${authToken}` }
+  });
+  const [merchantDetail] = await merchantDetailResponse.json();
+
+  merchantForm.delivery_fee.value = merchantDetail.delivery_fee;
+  merchantForm.eta_minutes.value = merchantDetail.eta_minutes;
+  merchantForm.rating.value = merchantDetail.rating;
+
+  setLoggedInUI(profile);
+  await Promise.all([loadMenu(), loadOrders()]);
 }
 
 async function loadMenu() {
-  const response = await fetch(`/api/merchants/${selectedMerchantId}/menu`);
+  const response = await fetch(`/api/merchants/${merchant.id}/menu`);
   menuItems = await response.json();
 
   menuList.innerHTML = menuItems
@@ -62,7 +92,9 @@ async function loadMenu() {
 }
 
 async function loadOrders() {
-  const response = await fetch(`/api/admin/merchants/${selectedMerchantId}/orders`);
+  const response = await fetch(`/api/admin/merchants/${merchant.id}/orders`, {
+    headers: { Authorization: `Bearer ${authToken}` }
+  });
   const orders = await response.json();
 
   ordersList.innerHTML = orders
@@ -84,10 +116,44 @@ async function loadOrders() {
     .join('');
 }
 
-merchantSelect.addEventListener('change', async () => {
-  selectedMerchantId = Number(merchantSelect.value);
-  fillMerchantForm();
-  await Promise.all([loadMenu(), loadOrders()]);
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(loginForm);
+
+  const response = await fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: formData.get('email'),
+      password: formData.get('password')
+    })
+  });
+
+  if (!response.ok) {
+    showFeedback('Credenciais inválidas.', true);
+    return;
+  }
+
+  const data = await response.json();
+  authToken = data.token;
+  localStorage.setItem('admin_token', authToken);
+  showFeedback('Login realizado com sucesso.');
+  await fetchMe();
+});
+
+logoutButton.addEventListener('click', async () => {
+  if (authToken) {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+  }
+
+  authToken = '';
+  localStorage.removeItem('admin_token');
+  merchant = null;
+  setLoggedOutUI();
+  showFeedback('Sessão encerrada.');
 });
 
 merchantForm.addEventListener('submit', async (event) => {
@@ -100,15 +166,15 @@ merchantForm.addEventListener('submit', async (event) => {
     rating: Number(merchantForm.rating.value)
   };
 
-  const response = await fetch(`/api/admin/merchants/${selectedMerchantId}`, {
+  const response = await fetch(`/api/admin/merchants/${merchant.id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) return showFeedback('Erro ao atualizar comércio.', true);
   showFeedback('Comércio atualizado com sucesso.');
-  await loadMerchants();
+  await fetchMe();
 });
 
 menuForm.addEventListener('submit', async (event) => {
@@ -119,9 +185,9 @@ menuForm.addEventListener('submit', async (event) => {
     price: Number(menuForm.price.value)
   };
 
-  const response = await fetch(`/api/admin/merchants/${selectedMerchantId}/menu`, {
+  const response = await fetch(`/api/admin/merchants/${merchant.id}/menu`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify(payload)
   });
 
@@ -144,7 +210,7 @@ menuList.addEventListener('click', async (event) => {
 
     const response = await fetch(`/api/admin/menu/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ name, description, price })
     });
 
@@ -157,7 +223,10 @@ menuList.addEventListener('click', async (event) => {
   const deleteButton = event.target.closest('button[data-delete-menu]');
   if (deleteButton) {
     const id = Number(deleteButton.dataset.deleteMenu);
-    const response = await fetch(`/api/admin/menu/${id}`, { method: 'DELETE' });
+    const response = await fetch(`/api/admin/menu/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
 
     if (!response.ok) return showFeedback('Erro ao excluir item.', true);
     showFeedback('Item removido com sucesso.');
@@ -172,7 +241,7 @@ ordersList.addEventListener('change', async (event) => {
   const orderId = Number(select.dataset.orderStatus);
   const response = await fetch(`/api/admin/orders/${orderId}/status`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ status: select.value })
   });
 
@@ -181,4 +250,17 @@ ordersList.addEventListener('change', async (event) => {
   await loadOrders();
 });
 
-loadMerchants();
+(async function bootstrap() {
+  if (!authToken) {
+    setLoggedOutUI();
+    return;
+  }
+
+  try {
+    await fetchMe();
+  } catch (error) {
+    authToken = '';
+    localStorage.removeItem('admin_token');
+    setLoggedOutUI();
+  }
+})();

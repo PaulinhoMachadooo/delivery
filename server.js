@@ -2,11 +2,47 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const dbPath = path.join(__dirname, 'delivery.db');
 const db = new sqlite3.Database(dbPath);
+
+const adminSessions = new Map();
+const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
+
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
+}
+
+function createSession(user) {
+  const token = crypto.randomBytes(32).toString('hex');
+  adminSessions.set(token, {
+    userId: user.id,
+    merchantId: user.merchant_id,
+    email: user.email,
+    name: user.name,
+    expiresAt: Date.now() + SESSION_TTL_MS
+  });
+  return token;
+}
+
+function requireAdminAuth(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const session = adminSessions.get(token);
+
+  if (!session || session.expiresAt < Date.now()) {
+    if (token) {
+      adminSessions.delete(token);
+    }
+    return res.status(401).json({ message: 'Não autorizado.' });
+  }
+
+  req.admin = session;
+  return next();
+}
 
 app.use(cors());
 app.use(express.json());
@@ -96,6 +132,18 @@ async function setupDatabase() {
     )
   `);
 
+  await run(`
+    CREATE TABLE IF NOT EXISTS restaurant_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      merchant_id INTEGER NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_salt TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+    )
+  `);
+
   const [{ count }] = await all('SELECT COUNT(*) AS count FROM merchants');
 
   if (count === 0) {
@@ -128,6 +176,25 @@ async function setupDatabase() {
       await run(
         'INSERT INTO menu_items (merchant_id, name, description, price) VALUES (?, ?, ?, ?)',
         menuItem
+      );
+    }
+  }
+
+  const [{ userCount }] = await all('SELECT COUNT(*) AS userCount FROM restaurant_users');
+  if (userCount === 0) {
+    const userSeeds = [
+      { merchantId: 1, name: 'Gerente Bella Massa', email: 'bella@entregacerta.com', password: 'Bella@123' },
+      { merchantId: 2, name: 'Gerente Sushi Centro', email: 'sushi@entregacerta.com', password: 'Sushi@123' },
+      { merchantId: 3, name: 'Gerente Burguer da Praça', email: 'burger@entregacerta.com', password: 'Burger@123' }
+    ];
+
+    for (const user of userSeeds) {
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hash = hashPassword(user.password, salt);
+      await run(
+        `INSERT INTO restaurant_users (merchant_id, name, email, password_salt, password_hash)
+         VALUES (?, ?, ?, ?, ?)`,
+        [user.merchantId, user.name, user.email, salt, hash]
       );
     }
   }
@@ -259,21 +326,76 @@ app.get('/api/orders/:orderId', async (req, res) => {
 
 
 
-app.get('/api/admin/merchants', async (_, res) => {
+
+app.post('/api/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Informe e-mail e senha.' });
+  }
+
   try {
-    const merchants = await all('SELECT * FROM merchants ORDER BY name');
-    res.json(merchants);
+    const user = await get('SELECT * FROM restaurant_users WHERE email = ?', [email]);
+    if (!user) {
+      return res.status(401).json({ message: 'Credenciais inválidas.' });
+    }
+
+    const computedHash = hashPassword(password, user.password_salt);
+    if (computedHash !== user.password_hash) {
+      return res.status(401).json({ message: 'Credenciais inválidas.' });
+    }
+
+    const merchant = await get('SELECT id, name, category FROM merchants WHERE id = ?', [user.merchant_id]);
+    const token = createSession(user);
+
+    return res.json({
+      token,
+      profile: {
+        name: user.name,
+        email: user.email,
+        merchant
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao autenticar.' });
+  }
+});
+
+app.get('/api/admin/me', requireAdminAuth, async (req, res) => {
+  try {
+    const merchant = await get('SELECT id, name, category FROM merchants WHERE id = ?', [req.admin.merchantId]);
+    return res.json({ name: req.admin.name, email: req.admin.email, merchant });
+  } catch (error) {
+    return res.status(500).json({ message: 'Erro ao carregar perfil.' });
+  }
+});
+
+app.post('/api/admin/logout', requireAdminAuth, (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  adminSessions.delete(token);
+  return res.json({ message: 'Sessão finalizada.' });
+});
+
+app.get('/api/admin/merchants', requireAdminAuth, async (req, res) => {
+  try {
+    const merchant = await get('SELECT * FROM merchants WHERE id = ?', [req.admin.merchantId]);
+    res.json(merchant ? [merchant] : []);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao carregar comércios.' });
   }
 });
 
-app.put('/api/admin/merchants/:merchantId', async (req, res) => {
+app.put('/api/admin/merchants/:merchantId', requireAdminAuth, async (req, res) => {
   const { merchantId } = req.params;
   const { name, category, delivery_fee: deliveryFee, eta_minutes: etaMinutes, rating } = req.body;
 
   if (!name || !category || !deliveryFee || !etaMinutes || !rating) {
     return res.status(400).json({ message: 'Dados inválidos para atualização do comércio.' });
+  }
+
+  if (Number(merchantId) !== req.admin.merchantId) {
+    return res.status(403).json({ message: 'Acesso negado.' });
   }
 
   try {
@@ -292,12 +414,16 @@ app.put('/api/admin/merchants/:merchantId', async (req, res) => {
   }
 });
 
-app.post('/api/admin/merchants/:merchantId/menu', async (req, res) => {
+app.post('/api/admin/merchants/:merchantId/menu', requireAdminAuth, async (req, res) => {
   const { merchantId } = req.params;
   const { name, description, price } = req.body;
 
   if (!name || !description || !price) {
     return res.status(400).json({ message: 'Dados inválidos para item de cardápio.' });
+  }
+
+  if (Number(merchantId) !== req.admin.merchantId) {
+    return res.status(403).json({ message: 'Acesso negado.' });
   }
 
   try {
@@ -312,7 +438,7 @@ app.post('/api/admin/merchants/:merchantId/menu', async (req, res) => {
   }
 });
 
-app.put('/api/admin/menu/:menuItemId', async (req, res) => {
+app.put('/api/admin/menu/:menuItemId', requireAdminAuth, async (req, res) => {
   const { menuItemId } = req.params;
   const { name, description, price } = req.body;
 
@@ -321,6 +447,11 @@ app.put('/api/admin/menu/:menuItemId', async (req, res) => {
   }
 
   try {
+    const item = await get('SELECT merchant_id FROM menu_items WHERE id = ?', [menuItemId]);
+    if (!item || item.merchant_id !== req.admin.merchantId) {
+      return res.status(403).json({ message: 'Acesso negado.' });
+    }
+
     const result = await run(
       'UPDATE menu_items SET name = ?, description = ?, price = ? WHERE id = ?',
       [name, description, price, menuItemId]
@@ -336,10 +467,15 @@ app.put('/api/admin/menu/:menuItemId', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/menu/:menuItemId', async (req, res) => {
+app.delete('/api/admin/menu/:menuItemId', requireAdminAuth, async (req, res) => {
   const { menuItemId } = req.params;
 
   try {
+    const item = await get('SELECT merchant_id FROM menu_items WHERE id = ?', [menuItemId]);
+    if (!item || item.merchant_id !== req.admin.merchantId) {
+      return res.status(403).json({ message: 'Acesso negado.' });
+    }
+
     const result = await run('DELETE FROM menu_items WHERE id = ?', [menuItemId]);
 
     if (result.changes === 0) {
@@ -352,8 +488,12 @@ app.delete('/api/admin/menu/:menuItemId', async (req, res) => {
   }
 });
 
-app.get('/api/admin/merchants/:merchantId/orders', async (req, res) => {
+app.get('/api/admin/merchants/:merchantId/orders', requireAdminAuth, async (req, res) => {
   const { merchantId } = req.params;
+
+  if (Number(merchantId) !== req.admin.merchantId) {
+    return res.status(403).json({ message: 'Acesso negado.' });
+  }
 
   try {
     const orders = await all(
@@ -370,7 +510,7 @@ app.get('/api/admin/merchants/:merchantId/orders', async (req, res) => {
   }
 });
 
-app.patch('/api/admin/orders/:orderId/status', async (req, res) => {
+app.patch('/api/admin/orders/:orderId/status', requireAdminAuth, async (req, res) => {
   const { orderId } = req.params;
   const { status } = req.body;
   const allowedStatus = ['Recebido', 'Em preparo', 'Saiu para entrega', 'Entregue', 'Cancelado'];
@@ -380,6 +520,11 @@ app.patch('/api/admin/orders/:orderId/status', async (req, res) => {
   }
 
   try {
+    const order = await get('SELECT merchant_id FROM orders WHERE id = ?', [orderId]);
+    if (!order || order.merchant_id !== req.admin.merchantId) {
+      return res.status(403).json({ message: 'Acesso negado.' });
+    }
+
     const result = await run('UPDATE orders SET status = ? WHERE id = ?', [status, orderId]);
 
     if (result.changes === 0) {

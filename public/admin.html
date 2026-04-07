@@ -12,37 +12,53 @@
       <a href="/">Voltar para vitrine</a>
     </header>
 
-    <main class="grid">
-      <section class="card">
-        <h2>Selecionar restaurante</h2>
-        <select id="merchant-select"></select>
-
-        <h3>Informações</h3>
-        <form id="merchant-form">
-          <input name="name" placeholder="Nome" required />
-          <input name="category" placeholder="Categoria" required />
-          <input name="delivery_fee" type="number" step="0.1" placeholder="Taxa de entrega" required />
-          <input name="eta_minutes" type="number" placeholder="Tempo (min)" required />
-          <input name="rating" type="number" step="0.1" placeholder="Avaliação" required />
-          <button type="submit">Salvar comércio</button>
+    <main>
+      <section id="login-card" class="card login-card">
+        <h2>Acesso do responsável</h2>
+        <p>Use o perfil do seu restaurante para acessar o painel.</p>
+        <form id="login-form">
+          <input type="email" name="email" placeholder="E-mail" required />
+          <input type="password" name="password" placeholder="Senha" required />
+          <button type="submit">Entrar no painel</button>
         </form>
+        <small>Contas de teste: bella@entregacerta.com / sushi@entregacerta.com / burger@entregacerta.com (senha padrão: indicada pelo administrador).</small>
       </section>
 
-      <section class="card">
-        <h2>Cardápio</h2>
-        <form id="menu-form">
-          <input name="name" placeholder="Nome do item" required />
-          <input name="description" placeholder="Descrição / ingredientes" required />
-          <input name="price" type="number" step="0.1" placeholder="Preço" required />
-          <button type="submit">Adicionar item</button>
-        </form>
-        <div id="menu-list"></div>
-      </section>
+      <div id="admin-dashboard" class="grid hidden">
+        <section class="card">
+          <div class="row">
+            <h2 id="merchant-title">Restaurante</h2>
+            <button id="logout-btn" type="button">Sair</button>
+          </div>
+          <p id="merchant-owner"></p>
 
-      <section class="card">
-        <h2>Pedidos recebidos</h2>
-        <div id="orders-list"></div>
-      </section>
+          <h3>Informações</h3>
+          <form id="merchant-form">
+            <input name="name" placeholder="Nome" required />
+            <input name="category" placeholder="Categoria" required />
+            <input name="delivery_fee" type="number" step="0.1" placeholder="Taxa de entrega" required />
+            <input name="eta_minutes" type="number" placeholder="Tempo (min)" required />
+            <input name="rating" type="number" step="0.1" placeholder="Avaliação" required />
+            <button type="submit">Salvar comércio</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Cardápio</h2>
+          <form id="menu-form">
+            <input name="name" placeholder="Nome do item" required />
+            <input name="description" placeholder="Descrição / ingredientes" required />
+            <input name="price" type="number" step="0.1" placeholder="Preço" required />
+            <button type="submit">Adicionar item</button>
+          </form>
+          <div id="menu-list"></div>
+        </section>
+
+        <section class="card">
+          <h2>Pedidos recebidos</h2>
+          <div id="orders-list"></div>
+        </section>
+      </div>
     </main>
 
     <p id="feedback"></p>
