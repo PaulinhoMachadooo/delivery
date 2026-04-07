@@ -7,36 +7,47 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <div>
-        <p class="badge">Delivery local</p>
-        <h1>Peça comida dos melhores comércios da cidade</h1>
-        <p class="subtitle">
-          Plataforma completa para pedidos online com acompanhamento de entrega.
-        </p>
-      </div>
+    <header class="topbar">
+      <div class="brand">🍔 Entrega Certa</div>
+      <div class="location">Entregando em <strong>Centro, sua cidade</strong></div>
+      <button class="ghost-btn" type="button">Entrar</button>
     </header>
 
-    <main class="layout">
-      <section>
-        <h2>Comércios disponíveis</h2>
+    <section class="hero">
+      <h1>Seu delivery local com experiência premium</h1>
+      <p>Peça refeições dos melhores comércios da cidade com rapidez, segurança e acompanhamento em tempo real.</p>
+      <div class="search-wrap">
+        <input id="search-input" type="search" placeholder="Buscar restaurante, prato ou categoria" />
+      </div>
+      <div class="chips" id="category-chips"></div>
+    </section>
+
+    <main class="app-layout">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Restaurantes</h2>
+          <span id="merchant-count" class="muted"></span>
+        </div>
         <div id="merchant-list" class="cards"></div>
       </section>
 
-      <section>
-        <h2>Cardápio</h2>
-        <div id="menu-list" class="cards"></div>
+      <section class="panel">
+        <div class="panel-header">
+          <h2 id="menu-title">Cardápio</h2>
+          <span id="menu-hint" class="muted">Selecione um restaurante para começar.</span>
+        </div>
+        <div id="menu-list" class="cards menu-grid"></div>
       </section>
 
       <aside class="cart-panel">
         <h2>Seu pedido</h2>
         <div id="cart-items" class="cart-items"></div>
-        <div class="cart-summary" id="cart-summary">
-          <p>Selecione um comércio para começar.</p>
+        <div id="cart-summary" class="cart-summary">
+          <p class="muted">Adicione itens para continuar.</p>
         </div>
 
         <form id="checkout-form">
-          <h3>Entrega</h3>
+          <h3>Dados de entrega</h3>
           <label>
             Nome
             <input type="text" name="customerName" required />
@@ -49,7 +60,7 @@
             Endereço completo
             <textarea name="address" rows="3" required></textarea>
           </label>
-          <button type="submit">Finalizar pedido</button>
+          <button type="submit" class="primary-btn">Finalizar pedido</button>
         </form>
 
         <div id="order-feedback" class="feedback" aria-live="polite"></div>

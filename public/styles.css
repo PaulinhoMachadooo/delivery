@@ -1,8 +1,16 @@
 :root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-soft: #f8f9fd;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --brand: #ea1d2c;
+  --brand-dark: #c71523;
+  --ok: #0f9d58;
+  --danger: #c0392b;
   color-scheme: light;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f7fb;
-  color: #17212f;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 * {
@@ -11,36 +19,113 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  background: linear-gradient(180deg, #fff, var(--bg));
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem clamp(1rem, 4vw, 3rem);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.brand {
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.location {
+  font-size: 0.95rem;
 }
 
 .hero {
-  padding: 2rem clamp(1rem, 3vw, 3rem);
-  background: linear-gradient(120deg, #222c50, #3d5293);
+  padding: 1.5rem clamp(1rem, 4vw, 3rem) 1rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+}
+
+.hero p {
+  color: var(--muted);
+  margin-bottom: 1rem;
+  max-width: 80ch;
+}
+
+.search-wrap input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 0.8rem 1rem;
+  font: inherit;
+}
+
+.chips {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid #ffd4d8;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  background: #fff3f4;
+  color: #8f1720;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chip.active {
+  background: var(--brand);
+  border-color: var(--brand);
   color: #fff;
 }
 
-.badge {
-  width: fit-content;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.4rem 0.75rem;
-  border-radius: 999px;
-}
-
-.subtitle {
-  max-width: 70ch;
-  opacity: 0.9;
-}
-
-.layout {
+.app-layout {
   display: grid;
-  gap: 1.5rem;
-  grid-template-columns: 1fr 1fr minmax(280px, 360px);
-  align-items: start;
-  padding: 1.5rem clamp(1rem, 3vw, 3rem) 2.5rem;
+  grid-template-columns: 1fr 1fr minmax(290px, 360px);
+  gap: 1rem;
+  padding: 0 1rem 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.panel,
+.cart-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+h2,
+h3 {
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .cards {
@@ -48,106 +133,158 @@ body {
   gap: 0.75rem;
 }
 
+.menu-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
 .card {
-  background: #fff;
-  border: 1px solid #dee3ef;
-  border-radius: 0.8rem;
-  padding: 1rem;
   display: grid;
   gap: 0.4rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
 }
 
 .card.active {
-  border-color: #3d5293;
-  box-shadow: 0 0 0 2px #d8dff8;
-}
-
-.small {
-  color: #4b5a75;
-  font-size: 0.95rem;
+  border-color: #ff9ca5;
+  box-shadow: 0 0 0 3px #ffe3e6;
 }
 
 .price {
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 button {
   border: 0;
-  border-radius: 0.65rem;
-  background: #2c8b4a;
-  color: #fff;
-  font-weight: 600;
-  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  font: inherit;
   cursor: pointer;
+  font-weight: 700;
 }
 
-button:hover {
-  filter: brightness(1.05);
+.primary-btn,
+.add-btn {
+  background: var(--brand);
+  color: #fff;
+}
+
+.primary-btn:hover,
+.add-btn:hover {
+  background: var(--brand-dark);
+}
+
+.ghost-btn {
+  background: #f2f4f8;
+  color: #1f2937;
 }
 
 .cart-panel {
-  background: #fff;
-  border: 1px solid #dee3ef;
-  border-radius: 0.8rem;
-  padding: 1rem;
   position: sticky;
-  top: 1rem;
+  top: 5rem;
 }
 
 .cart-items {
   display: grid;
-  gap: 0.5rem;
-  margin-bottom: 0.8rem;
+  gap: 0.6rem;
+  margin: 0.8rem 0;
 }
 
 .cart-item {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.qty-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  padding: 0;
+  background: #eef2f7;
+  color: #1f2937;
 }
 
 .cart-summary {
-  border-top: 1px dashed #ccd5e7;
-  border-bottom: 1px dashed #ccd5e7;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
   padding: 0.8rem 0;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1rem;
 }
 
 form {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.65rem;
 }
 
 label {
   display: grid;
   gap: 0.35rem;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 input,
 textarea {
-  border: 1px solid #bcc8df;
-  border-radius: 0.55rem;
-  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
   font: inherit;
 }
 
 .feedback {
-  min-height: 1.5rem;
-  margin-top: 0.75rem;
-  font-weight: 600;
+  margin-top: 0.65rem;
+  min-height: 1.3rem;
+  font-weight: 700;
 }
 
 .feedback.ok {
-  color: #0b7a2a;
+  color: var(--ok);
 }
 
 .feedback.error {
-  color: #b12020;
+  color: var(--danger);
 }
 
-@media (max-width: 1000px) {
-  .layout {
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 1rem;
+}
+
+@media (max-width: 1180px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+    padding: 0 1rem 1rem;
+  }
+
+  .menu-grid {
     grid-template-columns: 1fr;
   }
 

@@ -4,11 +4,18 @@ const cartItems = document.getElementById('cart-items');
 const cartSummary = document.getElementById('cart-summary');
 const checkoutForm = document.getElementById('checkout-form');
 const orderFeedback = document.getElementById('order-feedback');
+const searchInput = document.getElementById('search-input');
+const categoryChips = document.getElementById('category-chips');
+const merchantCount = document.getElementById('merchant-count');
+const menuTitle = document.getElementById('menu-title');
+const menuHint = document.getElementById('menu-hint');
 
 let merchants = [];
+let filteredMerchants = [];
 let selectedMerchant = null;
 let currentMenu = [];
 let cart = [];
+let activeCategory = 'Todos';
 
 const money = (value) =>
   new Intl.NumberFormat('pt-BR', {
@@ -21,15 +28,48 @@ function showFeedback(message, type = '') {
   orderFeedback.className = `feedback ${type}`;
 }
 
+function renderCategories() {
+  const categories = ['Todos', ...new Set(merchants.map((merchant) => merchant.category))];
+  categoryChips.innerHTML = categories
+    .map(
+      (category) =>
+        `<button type="button" class="chip ${activeCategory === category ? 'active' : ''}" data-category="${category}">${category}</button>`
+    )
+    .join('');
+}
+
+function applyMerchantFilters() {
+  const query = searchInput.value.trim().toLowerCase();
+
+  filteredMerchants = merchants.filter((merchant) => {
+    const categoryMatch = activeCategory === 'Todos' || merchant.category === activeCategory;
+    const text = `${merchant.name} ${merchant.category}`.toLowerCase();
+    const textMatch = !query || text.includes(query);
+    return categoryMatch && textMatch;
+  });
+
+  merchantCount.textContent = `${filteredMerchants.length} encontrados`;
+}
+
 function renderMerchants() {
-  merchantList.innerHTML = merchants
+  applyMerchantFilters();
+
+  if (filteredMerchants.length === 0) {
+    merchantList.innerHTML = '<div class="empty">Nenhum restaurante encontrado com esses filtros.</div>';
+    return;
+  }
+
+  merchantList.innerHTML = filteredMerchants
     .map(
       (merchant) => `
       <article class="card ${selectedMerchant?.id === merchant.id ? 'active' : ''}">
         <strong>${merchant.name}</strong>
-        <span class="small">${merchant.category} • ⭐ ${merchant.rating.toFixed(1)}</span>
-        <span class="small">Entrega: ${money(merchant.delivery_fee)} • ${merchant.eta_minutes} min</span>
-        <button onclick="selectMerchant(${merchant.id})">Ver cardápio</button>
+        <span class="meta">${merchant.category} • ⭐ ${merchant.rating.toFixed(1)}</span>
+        <span class="meta">Entrega ${money(merchant.delivery_fee)} • ${merchant.eta_minutes} min</span>
+        <div class="card-footer">
+          <span class="meta">Pedido mínimo flexível</span>
+          <button type="button" class="add-btn" data-select-merchant="${merchant.id}">Ver cardápio</button>
+        </div>
       </article>`
     )
     .join('');
@@ -37,18 +77,25 @@ function renderMerchants() {
 
 function renderMenu() {
   if (!selectedMerchant) {
-    menuList.innerHTML = '<p class="small">Escolha um comércio para visualizar os itens.</p>';
+    menuList.innerHTML = '<div class="empty">Escolha um restaurante para ver os pratos.</div>';
+    menuTitle.textContent = 'Cardápio';
+    menuHint.textContent = 'Selecione um restaurante para começar.';
     return;
   }
+
+  menuTitle.textContent = `Cardápio • ${selectedMerchant.name}`;
+  menuHint.textContent = `${selectedMerchant.eta_minutes} min • Entrega ${money(selectedMerchant.delivery_fee)}`;
 
   menuList.innerHTML = currentMenu
     .map(
       (item) => `
       <article class="card">
         <strong>${item.name}</strong>
-        <span class="small">${item.description}</span>
-        <span class="price">${money(item.price)}</span>
-        <button onclick="addToCart(${item.id})">Adicionar</button>
+        <span class="meta">${item.description}</span>
+        <div class="card-footer">
+          <span class="price">${money(item.price)}</span>
+          <button type="button" class="add-btn" data-add-item="${item.id}">Adicionar</button>
+        </div>
       </article>`
     )
     .join('');
@@ -56,8 +103,8 @@ function renderMenu() {
 
 function renderCart() {
   if (cart.length === 0) {
-    cartItems.innerHTML = '<p class="small">Nenhum item no carrinho.</p>';
-    cartSummary.innerHTML = '<p>Selecione itens para continuar.</p>';
+    cartItems.innerHTML = '<p class="muted">Seu carrinho está vazio.</p>';
+    cartSummary.innerHTML = '<p class="muted">Adicione itens para continuar.</p>';
     return;
   }
 
@@ -65,8 +112,16 @@ function renderCart() {
     .map(
       (item) => `
       <div class="cart-item">
-        <span>${item.name} x${item.quantity}</span>
-        <span>${money(item.price * item.quantity)}</span>
+        <div>
+          <strong>${item.name}</strong>
+          <div class="meta">${money(item.price)} cada</div>
+          <div class="qty-actions">
+            <button type="button" class="qty-btn" data-dec-item="${item.id}">-</button>
+            <span>${item.quantity}</span>
+            <button type="button" class="qty-btn" data-inc-item="${item.id}">+</button>
+          </div>
+        </div>
+        <strong>${money(item.price * item.quantity)}</strong>
       </div>`
     )
     .join('');
@@ -77,7 +132,7 @@ function renderCart() {
 
   cartSummary.innerHTML = `
     <div class="cart-item"><span>Subtotal</span><span>${money(subtotal)}</span></div>
-    <div class="cart-item"><span>Entrega</span><span>${money(deliveryFee)}</span></div>
+    <div class="cart-item"><span>Taxa de entrega</span><span>${money(deliveryFee)}</span></div>
     <div class="cart-item"><strong>Total</strong><strong>${money(total)}</strong></div>
   `;
 }
@@ -85,11 +140,12 @@ function renderCart() {
 async function loadMerchants() {
   const response = await fetch('/api/merchants');
   merchants = await response.json();
+  renderCategories();
   renderMerchants();
 }
 
 async function selectMerchant(merchantId) {
-  selectedMerchant = merchants.find((merchant) => merchant.id === merchantId);
+  selectedMerchant = merchants.find((merchant) => merchant.id === Number(merchantId));
   cart = [];
   showFeedback('');
   renderMerchants();
@@ -99,14 +155,17 @@ async function selectMerchant(merchantId) {
   currentMenu = await response.json();
   renderMenu();
 }
-window.selectMerchant = selectMerchant;
 
 function addToCart(menuItemId) {
-  const selectedItem = currentMenu.find((item) => item.id === menuItemId);
-  const cartItem = cart.find((item) => item.id === menuItemId);
+  const selectedItem = currentMenu.find((item) => item.id === Number(menuItemId));
+  const existing = cart.find((item) => item.id === Number(menuItemId));
 
-  if (cartItem) {
-    cartItem.quantity += 1;
+  if (!selectedItem) {
+    return;
+  }
+
+  if (existing) {
+    existing.quantity += 1;
   } else {
     cart.push({
       id: selectedItem.id,
@@ -118,18 +177,72 @@ function addToCart(menuItemId) {
 
   renderCart();
 }
-window.addToCart = addToCart;
+
+function updateQuantity(menuItemId, delta) {
+  const target = cart.find((item) => item.id === Number(menuItemId));
+  if (!target) {
+    return;
+  }
+
+  target.quantity += delta;
+  if (target.quantity <= 0) {
+    cart = cart.filter((item) => item.id !== Number(menuItemId));
+  }
+  renderCart();
+}
+
+merchantList.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-select-merchant]');
+  if (button) {
+    selectMerchant(button.dataset.selectMerchant);
+  }
+});
+
+menuList.addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-add-item]');
+  if (button) {
+    addToCart(button.dataset.addItem);
+  }
+});
+
+cartItems.addEventListener('click', (event) => {
+  const inc = event.target.closest('button[data-inc-item]');
+  if (inc) {
+    updateQuantity(inc.dataset.incItem, 1);
+    return;
+  }
+
+  const dec = event.target.closest('button[data-dec-item]');
+  if (dec) {
+    updateQuantity(dec.dataset.decItem, -1);
+  }
+});
+
+categoryChips.addEventListener('click', (event) => {
+  const chip = event.target.closest('button[data-category]');
+  if (!chip) {
+    return;
+  }
+
+  activeCategory = chip.dataset.category;
+  renderCategories();
+  renderMerchants();
+});
+
+searchInput.addEventListener('input', () => {
+  renderMerchants();
+});
 
 checkoutForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   if (!selectedMerchant) {
-    showFeedback('Escolha um comércio antes de finalizar.', 'error');
+    showFeedback('Escolha um restaurante antes de finalizar.', 'error');
     return;
   }
 
   if (cart.length === 0) {
-    showFeedback('Adicione itens no carrinho antes de finalizar.', 'error');
+    showFeedback('Adicione itens ao carrinho antes de finalizar.', 'error');
     return;
   }
 
@@ -160,11 +273,7 @@ checkoutForm.addEventListener('submit', async (event) => {
     return;
   }
 
-  showFeedback(
-    `Pedido #${data.orderId} confirmado! Status: ${data.status}. Previsão: ${data.etaMinutes} min.`,
-    'ok'
-  );
-
+  showFeedback(`Pedido #${data.orderId} confirmado! Previsão: ${data.etaMinutes} min.`, 'ok');
   cart = [];
   renderCart();
   checkoutForm.reset();
