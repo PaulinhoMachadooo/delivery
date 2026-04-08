@@ -1,11 +1,17 @@
 RewriteEngine On
 
-# API PHP
+# API em PHP
 RewriteRule ^api/?$ api/index.php [QSA,L]
-RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+RewriteRule ^api/.*$ api/index.php [QSA,L]
 
-# Front controller para SPA cliente
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^$ public/index.html [L]
+# Se arquivo/pasta existir, não reescreve
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Evita loop se já estiver em /public
+RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/$1 [L]
+
+# Fallback para home
+RewriteRule ^$ public/index.html [L]

@@ -8,6 +8,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+
+set_exception_handler(function (Throwable $e): void {
+    http_response_code(500);
+    echo json_encode([
+        'message' => 'Erro interno no servidor.',
+        'details' => envValue('APP_DEBUG', '0') === '1' ? $e->getMessage() : null,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+});
+
+
 function envValue(string $key, string $default = ''): string
 {
     $value = getenv($key);
@@ -28,10 +39,15 @@ function db(): PDO
     $pass = envValue('DB_PASSWORD', '');
 
     $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+
+    try {
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+    } catch (Throwable $e) {
+        throw new RuntimeException('Falha de conexão com o banco. Verifique DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD e pdo_mysql habilitado.');
+    }
 
     return $pdo;
 }

@@ -68,3 +68,11 @@ O backend foi reescrito para PHP e exposto em `api/index.php` com roteamento via
 2. Configure variáveis de ambiente do banco (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
 3. Importe `db/hostinger-schema.sql` no phpMyAdmin.
 4. Garanta que o módulo `mod_rewrite` esteja habilitado para o `.htaccess`.
+
+### Erro 500 na Hostinger (checagem rápida)
+Se aparecer `500 Internal Server Error`, verifique:
+1. `mod_rewrite` habilitado e `.htaccess` ativo.
+2. Extensões PHP: `pdo` e `pdo_mysql` habilitadas.
+3. Variáveis de ambiente do banco corretas (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
+4. Banco importado com `db/hostinger-schema.sql`.
+5. Opcional: defina `APP_DEBUG=1` para exibir `details` no JSON de erro da API.
