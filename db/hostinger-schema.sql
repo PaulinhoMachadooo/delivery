@@ -71,3 +71,19 @@ SELECT * FROM (
   SELECT 3, 'Batata Rústica', 'Porção de batata rústica com páprica defumada.', 19.90
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM menu_items LIMIT 1);
+
+
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  token VARCHAR(128) PRIMARY KEY,
+  user_id INT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  CONSTRAINT fk_admin_session_user FOREIGN KEY (user_id) REFERENCES restaurant_users(id) ON DELETE CASCADE
+);
+
+INSERT INTO restaurant_users (merchant_id, name, email, password_salt, password_hash)
+SELECT * FROM (
+  SELECT 1, 'Gerente Bella Massa', 'bella@entregacerta.com', '', 'Bella@123' UNION ALL
+  SELECT 2, 'Gerente Sushi Centro', 'sushi@entregacerta.com', '', 'Sushi@123' UNION ALL
+  SELECT 3, 'Gerente Burguer da Praça', 'burger@entregacerta.com', '', 'Burger@123'
+) AS seed
+WHERE NOT EXISTS (SELECT 1 FROM restaurant_users LIMIT 1);
