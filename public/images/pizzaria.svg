@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff7a59"/>
+      <stop offset="1" stop-color="#ff3c3c"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="320" fill="url(#g1)"/>
+  <circle cx="135" cy="160" r="90" fill="#ffd86b"/>
+  <circle cx="135" cy="160" r="70" fill="#f2be45"/>
+  <circle cx="110" cy="132" r="8" fill="#c0392b"/>
+  <circle cx="160" cy="146" r="8" fill="#c0392b"/>
+  <circle cx="140" cy="186" r="8" fill="#c0392b"/>
+  <text x="250" y="155" fill="#fff" font-size="48" font-family="Arial, sans-serif" font-weight="700">Pizzaria</text>
+  <text x="250" y="195" fill="#fff" font-size="28" font-family="Arial, sans-serif">Sabor artesanal</text>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "delivery-cidade",
+  "version": "1.0.0",
+  "description": "Plataforma full stack de pedidos de comida com delivery para múltiplos comércios da cidade.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init:hostinger-db": "node scripts/init-hostinger-db.js"
+  },
+  "keywords": [
+    "delivery",
+    "food-ordering",
+    "fullstack"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7",
+    "mysql2": "^3.11.3"
+  }
+}
